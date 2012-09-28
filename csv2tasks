@@ -2,6 +2,9 @@
 require 'csv'
 require 'rally_rest_api'
 
+rally_user='your@ema.il'
+rally_pass='y0urp4ss'
+
 if ARGV[0] 
 	csv_file = ARGV[0] 
 else
@@ -10,8 +13,8 @@ else
 end
 
 
-rally = RallyRestAPI.new(:username => "eduardo.macan@abril.com.br",
-			 :password => "teste123")
+rally = RallyRestAPI.new(:username => rally_user,
+			 :password => rally_pass)
 
 user_story=""
 CSV.foreach(csv_file) do |row|
