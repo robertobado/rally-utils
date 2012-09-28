@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+require 'rally_rest_api'
+
+rally_user='your@ema.il'
+rally_pass='y0urp4ss'
+
+puts "Enter Task Name"
+task_name = STDIN.gets.chop
+user_story = ARGV[0]
+puts "Creating task '#{task_name}' in story #{user_story}"
+
+rally = RallyRestAPI.new(:username => rally_user,
+			 :password => rally_pass)
+
+stories =  rally.find( :hierarchical_requirement ) { 
+					equal :formatted_id , user_story
+}
+
+story = stories.first
+task = rally.create(:task, :name => task_name , :work_product => story, :estimate => 1)
+puts "Task #{task.formatted_i_d} created"
