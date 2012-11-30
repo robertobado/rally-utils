@@ -9,9 +9,9 @@ put your username and password in $HOME/.rallyutils , like this:
 	password: MyP4ssW0rD 
 
 
-itertasks - lists all tasks from a given iteration, outputs to screen,csv or pdf file for printing 
-addtask - adds a new task under an existing user story
-csv2tasks - adds a batch of tasks under existing user stories from a csv file.
+ * itertasks - lists all tasks from a given iteration, outputs to screen,csv or pdf file for printing 
+ * addtask - adds a new task under an existing user story
+ * csv2tasks - adds a batch of tasks under existing user stories from a csv file
 
 Example csv:
 
