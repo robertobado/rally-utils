@@ -24,5 +24,5 @@ stories =  rally.find( :hierarchical_requirement ) {
 }
 
 story = stories.first
-task = rally.create(:task, :name => task_name , :work_product => story, :estimate => 1)
+task = rally.create(:task, :name => task_name , :work_product => story, :estimate => 1, :to_do => 1)
 puts "Task #{task.formatted_i_d} created"
