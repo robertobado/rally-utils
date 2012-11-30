@@ -1,0 +1,156 @@
+#!/usr/bin/env ruby
+require 'csv'
+require 'rally_rest_api'
+require 'ostruct'
+require 'optparse'
+require 'yaml'
+
+#maybe I should make a gem out of this class...
+require 'prawn'
+require 'prawn/measurement_extensions'
+require 'prawn/qrcode'
+
+
+class TaskBook
+	
+    def initialize
+		@card_index = 0
+		@pdf = Prawn::Document.new(:page_size => "A4",:margin => [5,5])
+    end
+
+
+	def add_card(story_id,task_id,task_desc)
+		if @card_index > 0 and @card_index % 10 == 0 then @pdf.start_new_page end
+		#origin
+		
+		x = 12.mm + (@card_index % 2) * 94.mm
+		y = 290.mm - (@card_index / 2 % 5) * 58.mm
+
+			#draw the card
+			@pdf.stroke do
+				#card border
+				@pdf.rectangle [x,y],89.mm,55.mm
+				# horizontal line
+				@pdf.line      [x,y - 21.mm],[x + 89.mm, y - 21.mm]
+				# vertical line
+				@pdf.line      [x + 34.mm ,y - 21.mm],[x + 34.mm, y ]
+			end
+
+		#put text into the bounding boxes
+
+		@pdf.bounding_box([x ,y - 5.mm ], :width=> 34.mm, :height=>21.mm ) do
+			@pdf.text task_id, :style => :bold, :size => 20 , :align => :center
+			@pdf.text story_id, :size => 12 , :align => :center
+		end
+
+		@pdf.bounding_box([x + 5.mm, y - 26.mm] , 
+			#change 89 to 60 when printing QRCODE
+			:width => 60.mm, :height => 34.mm ) do
+			@pdf.text task_desc, :size => 16 , :style => :bold
+		end
+
+	#	@pdf.bounding_box([x + 65.mm, y - 31.mm] , 
+	#		:width => 34.mm, :height => 34.mm ) do
+	#		@pdf.print_qr_code(task_id, :extent => 25.mm, :stroke => false )
+	#	end
+		@card_index = @card_index + 1
+    end
+	def render_file(filename)
+		@pdf.render_file filename
+	end
+end
+
+
+options = OpenStruct.new
+options.pdffile = "output.pdf"
+options.csvfile = "output.csv"
+options.csvoutput = false
+options.pdfouput = false
+options.iteration = ""
+options.user = nil
+options.password = nil
+	
+opts = OptionParser.new
+opts.banner = "Usage: itertasks [options]"
+opts.on('-iITERATION','--iteration=ITERATION','Iteration ID (mandatory)') do |iter|
+	options.iteration << iter
+end
+
+opts.on('-c[file]','--csv[=file]','Creates a CSV file') do |file|
+	options.csvfile = file || 'output.csv'
+	options.csvoutput = true
+end
+	
+opts.on('-p[=file]','--pdf[=file]','Creates a printable PDF TaskBook') do |file|
+	options.pdffile = file || 'output.pdf'
+	options.pdfoutput = true
+end
+
+opts.on('-U username','--user=username','Provides a Rally User') do |user|
+	options.user = user
+end
+opts.on('-P password','--password=password','Provides a Rally Password') do |pass|
+	options.password = pass
+end
+		
+opts.on_tail( '-h', '--help', 'Displays this screen' ) do
+	puts opts
+	exit
+end
+		
+opts.parse!(ARGV)
+
+begin
+	config = YAML.load_file("#{Dir.home}/.rallyutils")
+rescue 
+	if !options.user and !options.password then
+		puts opts
+		puts "\nERROR: #{Dir.home}/.rallyutils not found and no user/password provided"
+		exit
+	end
+end
+
+rally_user=options.user || config["user"]
+rally_pass=options.password || config["password"]
+
+if options.iteration.empty? then
+	puts opts
+	exit
+else
+	itername = options.iteration
+end
+
+#Queries iteration
+rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
+res = rally.find( :iteration ) { equal :object_i_d , itername }
+iter = res.first
+
+
+if options.pdfoutput then
+	tb = TaskBook.new
+end
+if options.csvoutput then
+	csv = CSV.open(options.csvfile,"wb", :force_quotes => true )
+end
+
+stories =  rally.find( :hierarchical_requirement ) { equal :iteration, iter }
+stories.each do |story|
+  story.tasks.each do |task|
+	if options.pdfoutput then
+		tb.add_card(story.formatted_i_d,task.formatted_i_d,task.name)
+	end
+	
+  	if options.csvoutput then
+		csv << [story.formatted_i_d,task.formatted_i_d,task.name]
+  	end
+  	
+  	if !(options.csvoutput or options.pdfoutput) then
+		puts "#{story.formatted_i_d}, #{task.formatted_i_d}: #{task.name}"
+	end
+  end
+end
+
+if options.pdfoutput then
+	tb.render_file(options.pdffile)
+end
+

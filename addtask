@@ -1,8 +1,15 @@
 #!/usr/bin/env ruby
 require 'rally_rest_api'
 
-rally_user='your@ema.il'
-rally_pass='y0urp4ss'
+begin
+	config = YAML.load_file("#{Dir.home}/.rallyutils")
+rescue 
+	puts "\nERROR: #{Dir.home}/.rallyutils not found"
+end
+
+
+rally_user=config["user"]
+rally_pass=config["pass"]
 
 puts "Enter Task Name"
 task_name = STDIN.gets.chop

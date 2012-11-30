@@ -8,3 +8,5 @@ source :gemcutter
 source "http://gemcutter.org"
 
 gem 'rally_rest_api'
+gem 'prawn'
+gem 'prawn-qrcode'

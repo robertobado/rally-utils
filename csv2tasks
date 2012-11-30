@@ -1,9 +1,17 @@
 #!/usr/bin/env ruby
 require 'csv'
 require 'rally_rest_api'
+require 'yaml'
 
-rally_user='your@ema.il'
-rally_pass='y0urp4ss'
+#begin
+        config = YAML.load_file("#{Dir.home}/.rallyutils")
+#rescue
+#        puts "\nERROR: #{Dir.home}/.rallyutils not found"
+#        exit
+#end
+
+rally_user=config["user"]
+rally_pass=config["password"]
 
 if ARGV[0] 
 	csv_file = ARGV[0] 
