@@ -49,10 +49,10 @@ class TaskBook
 			@pdf.text task_desc, :size => 16 , :style => :bold
 		end
 
-	#	@pdf.bounding_box([x + 65.mm, y - 31.mm] , 
-	#		:width => 34.mm, :height => 34.mm ) do
-	#		@pdf.print_qr_code(task_id, :extent => 25.mm, :stroke => false )
-	#	end
+		@pdf.bounding_box([x + 65.mm, y - 31.mm] , 
+			:width => 34.mm, :height => 34.mm ) do
+			@pdf.print_qr_code(task_id, :extent => 25.mm, :stroke => false )
+		end
 		@card_index = @card_index + 1
     end
 	def render_file(filename)
@@ -125,7 +125,6 @@ rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
 res = rally.find( :iteration ) { equal :object_i_d , itername }
 iter = res.first
 
-
 if options.pdfoutput then
 	tb = TaskBook.new
 end
@@ -135,19 +134,21 @@ end
 
 stories =  rally.find( :hierarchical_requirement ) { equal :iteration, iter }
 stories.each do |story|
-  story.tasks.each do |task|
-	if options.pdfoutput then
-		tb.add_card(story.formatted_i_d,task.formatted_i_d,task.name)
+	if !story.tasks.nil? then
+	  story.tasks.each do |task|
+		if options.pdfoutput then
+			tb.add_card(story.formatted_i_d,task.formatted_i_d,task.name)
+		end
+		
+		if options.csvoutput then
+			csv << [story.formatted_i_d,task.formatted_i_d,task.name]
+		end
+		
+		if !(options.csvoutput or options.pdfoutput) then
+			puts "#{story.formatted_i_d}, #{task.formatted_i_d}: #{task.name}"
+		end
+	  end
 	end
-	
-  	if options.csvoutput then
-		csv << [story.formatted_i_d,task.formatted_i_d,task.name]
-  	end
-  	
-  	if !(options.csvoutput or options.pdfoutput) then
-		puts "#{story.formatted_i_d}, #{task.formatted_i_d}: #{task.name}"
-	end
-  end
 end
 
 if options.pdfoutput then
