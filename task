@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+require 'csv'
+require 'rally_rest_api'
+require 'ostruct'
+require 'optparse'
+require 'yaml'
+
+options = OpenStruct.new
+options.pdffile = "output.pdf"
+options.csvfile = "output.csv"
+options.csvoutput = false
+options.pdfouput = false
+options.iteration = ""
+options.user = nil
+options.password = nil
+	
+opts = OptionParser.new
+opts.banner = "Usage: status [options] TASKID [...]"
+opts.on('-d','--defined','set task state to "defined"') do 
+	options.state = 'Defined'
+end
+
+opts.on('-p','--in-progress','set task state to "in progress"') do 
+	options.state = 'In-Progress'
+end
+	
+opts.on('-c','--completed','set task state to "completed"') do 
+	options.state='Completed'
+end
+
+opts.on('-U username','--user=username','Provides a Rally User') do |user|
+	options.user = user
+end
+opts.on('-P password','--password=password','Provides a Rally Password') do |pass|
+	options.password = pass
+end
+		
+opts.on_tail( '-h', '--help', 'Displays this screen' ) do
+	puts opts
+	exit
+end
+		
+opts.parse!(ARGV)
+if !options.state
+	puts opts
+	exit
+end
+
+begin
+	config = YAML.load_file("#{Dir.home}/.rallyutils")
+rescue 
+	if !options.user and !options.password then
+		puts opts
+		puts "\nERROR: #{Dir.home}/.rallyutils not found and no user/password provided"
+		exit
+	end
+end
+
+rally_user=options.user || config["user"]
+rally_pass=options.password || config["password"]
+
+#Queries iteration
+rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
+
+ARGV.each do |arg|
+    res =  rally.find( :task ) { equal :formatted_i_d, arg }
+    task = res.results.first
+    task.update(:state => options.state)
+	puts "#{task.formatted_i_d} state set to '#{options.state}'"
+end
+
