@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
+require "rubygems"
 require 'rally_rest_api'
+require 'yaml'
 
 begin
 	config = YAML.load_file("#{Dir.home}/.rallyutils")
