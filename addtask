@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
+require "rubygems"
 require 'rally_rest_api'
+require 'yaml'
 
 begin
 	config = YAML.load_file("#{Dir.home}/.rallyutils")
@@ -7,22 +9,32 @@ rescue
 	puts "\nERROR: #{Dir.home}/.rallyutils not found"
 end
 
-
 rally_user=config["user"]
 rally_pass=config["pass"]
-
-puts "Enter Task Name"
-task_name = STDIN.gets.chop
-user_story = ARGV[0]
-puts "Creating task '#{task_name}' in story #{user_story}"
 
 rally = RallyRestAPI.new(:username => rally_user,
 			 :password => rally_pass)
 
-stories =  rally.find( :hierarchical_requirement ) { 
+user_story = ARGV[0]
+
+if user_story[0] == "D"
+	stories =  rally.find( :defect ) { 
 					equal :formatted_id , user_story
-}
+	}
+else
+	stories =  rally.find( :hierarchical_requirement ) { 
+						equal :formatted_id , user_story
+	}
+end
 
 story = stories.first
-task = rally.create(:task, :name => task_name , :work_product => story, :estimate => 1, :to_do => 1)
-puts "Task #{task.formatted_i_d} created"
+while true
+	puts "Enter Task Name"
+	task_name = STDIN.gets.chop
+	break if task_name.nil? or task_name.empty?
+	
+	puts "Creating task '#{task_name}' in story #{user_story}"
+
+	task = rally.create(:task, :name => task_name , :work_product => story, :estimate => 1, :to_do => 1)
+	puts "Task #{task.formatted_i_d} created"
+end
