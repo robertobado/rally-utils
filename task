@@ -4,6 +4,7 @@ require 'rally_rest_api'
 require 'ostruct'
 require 'optparse'
 require 'yaml'
+require 'pp'
 
 options = OpenStruct.new
 options.pdffile = "output.pdf"
@@ -41,7 +42,7 @@ opts.on_tail( '-h', '--help', 'Displays this screen' ) do
 end
 		
 opts.parse!(ARGV)
-if !options.state
+if ARGV.length < 1
 	puts opts
 	exit
 end
@@ -65,7 +66,11 @@ rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
 ARGV.each do |arg|
     res =  rally.find( :task ) { equal :formatted_i_d, arg }
     task = res.results.first
+    if options.state then
     task.update(:state => options.state)
 	puts "#{task.formatted_i_d} state set to '#{options.state}'"
+    else
+	puts "#{task.formatted_i_d} state is '#{task.state}'"
+    end
 end
 
