@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+require 'csv'
+require 'rally_rest_api'
+require 'ostruct'
+require 'optparse'
+require 'yaml'
+require 'gruff'
+
+options = OpenStruct.new
+options.csvoutput = false
+options.pdfouput = false
+options.iteration = ""
+options.user = nil
+options.password = nil
+	
+opts = OptionParser.new
+opts.banner = "Usage: taskpair [options] TASKID username , username ..."
+
+opts.on('-U username','--user=username','Provides a Rally User') do |user|
+	options.user = user
+end
+opts.on('-P password','--password=password','Provides a Rally Password') do |pass|
+	options.password = pass
+end
+
+opts.on('-r','--remove','Removes rally users from the task') do |user|
+	options.action='remove'
+end
+
+opts.on('-a','--add','Adds rally users to the task') do |user|
+	options.action='add'
+end
+
+opts.on_tail( '-h', '--help', 'Displays this screen' ) do
+	puts opts
+	exit
+end
+		
+opts.parse!(ARGV)
+obj_name = ARGV.shift
+
+if !obj_name then
+	puts opts
+	exit
+end
+
+begin
+	config = YAML.load_file("#{Dir.home}/.rallyutils")
+rescue 
+	if !options.user and !options.password then
+		puts opts
+		puts "\nERROR: #{Dir.home}/.rallyutils not found and no user/password provided"
+		exit
+	end
+end
+
+rally_user=options.user || config["user"]
+rally_pass=options.password || config["password"]
+
+#Queries iteratio
+rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
+res = rally.find( :task ) { equal :formatted_i_d , obj_name }
+task = res.first
+
+pair = []
+if task.pair then
+	pair = task.pair.split(',')
+end
+
+
+if options.action == 'add' then
+   ARGV.each do |user|
+	if !pair.include?(user) then
+		pair.push(user)
+	end
+   end
+end
+
+if options.action == 'remove' then
+   ARGV.each do |user|
+	if pair.include?(user) then
+		pair.delete(user)
+	end
+   end
+end
+if options.action then
+	task.update(:pair => pair.join(','))
+else
+	puts pair
+end

@@ -13,6 +13,7 @@ put your username and password in $HOME/.rallyutils , like this:
  * addtask - adds a new task under an existing user story
  * task - Changes the state of one or more tasks
  * csv2tasks - adds a batch of tasks under existing user stories from a csv file
+ * taskpair - edits usernames in a custom 'Pair' tag in rally tasks
 
 Example csv:
 
