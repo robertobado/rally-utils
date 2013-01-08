@@ -10,7 +10,7 @@ rescue
 end
 
 rally_user=config["user"]
-rally_pass=config["pass"]
+rally_pass=config["password"]
 
 rally = RallyRestAPI.new(:username => rally_user,
 			 :password => rally_pass)
