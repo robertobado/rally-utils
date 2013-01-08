@@ -67,13 +67,18 @@ options.csvfile = "output.csv"
 options.csvoutput = false
 options.pdfouput = false
 options.iteration = ""
+options.story = ""
 options.user = nil
 options.password = nil
 	
 opts = OptionParser.new
-opts.banner = "Usage: itertasks [options]"
-opts.on('-iITERATION','--iteration=ITERATION','Iteration ID (mandatory)') do |iter|
+opts.banner = "Usage: itertasks <-i Iteration ID| -s StoryID> [options]"
+opts.on('-iITERATION','--iteration=ITERATION','Iteration ID') do |iter|
 	options.iteration << iter
+end
+
+opts.on('-sSTORY','--story=STORY','STORY ID (mandatory)') do |story|
+	options.story << story
 end
 
 opts.on('-c[file]','--csv[=file]','Creates a CSV file') do |file|
@@ -113,17 +118,22 @@ end
 rally_user=options.user || config["user"]
 rally_pass=options.password || config["password"]
 
-if options.iteration.empty? then
+if options.iteration.empty? and options.story.empty? then
 	puts opts
 	exit
-else
+end
+if not options.iteration.empty? then
 	itername = options.iteration
 end
 
 #Queries iteration
+
 rally = RallyRestAPI.new(:username => rally_user, :password => rally_pass)
-res = rally.find( :iteration ) { equal :object_i_d , itername }
-iter = res.first
+
+if itername then
+	res = rally.find( :iteration ) { equal :object_i_d , itername }
+	iter = res.first
+end
 
 if options.pdfoutput then
 	tb = TaskBook.new
@@ -132,7 +142,11 @@ if options.csvoutput then
 	csv = CSV.open(options.csvfile,"wb", :force_quotes => true )
 end
 
-stories =  rally.find( :hierarchical_requirement ) { equal :iteration, iter }
+if not options.iteration.empty? then
+	stories =  rally.find( :hierarchical_requirement ) { equal :iteration, iter }
+elsif not options.story.empty? then
+	stories =  rally.find( :hierarchical_requirement ) { equal :formatted_i_d, options.story }
+end
 stories.each do |story|
 	if !story.tasks.nil? then
 	  story.tasks.each do |task|

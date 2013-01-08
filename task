@@ -70,7 +70,7 @@ ARGV.each do |arg|
     task.update(:state => options.state)
 	puts "#{task.formatted_i_d} state set to '#{options.state}'"
     else
-	puts "#{task.formatted_i_d} state is '#{task.state}'"
+	puts "#{task.formatted_i_d} state is '#{task.state}' (#{task.name})"
     end
 end
 
