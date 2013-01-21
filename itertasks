@@ -65,6 +65,7 @@ options = OpenStruct.new
 options.pdffile = "output.pdf"
 options.csvfile = "output.csv"
 options.csvoutput = false
+options.csvoutputpairs = false
 options.pdfouput = false
 options.iteration = ""
 options.story = ""
@@ -89,6 +90,10 @@ end
 opts.on('-p[=file]','--pdf[=file]','Creates a printable PDF TaskBook') do |file|
 	options.pdffile = file || 'output.pdf'
 	options.pdfoutput = true
+end
+
+opts.on('-d','--devs','adds the content of the "pairs" custom field to the csv file') do |file|
+	options.csvoutputpairs = true
 end
 
 opts.on('-U username','--user=username','Provides a Rally User') do |user|
@@ -155,7 +160,12 @@ stories.each do |story|
 		end
 		
 		if options.csvoutput then
-			csv << [story.formatted_i_d,task.formatted_i_d,task.name]
+			if not options.csvoutputpairs
+				csv << [story.formatted_i_d,task.formatted_i_d,task.name]
+			else
+				csv << [story.formatted_i_d,task.formatted_i_d,task.name,task.pair]
+			end
+
 		end
 		
 		if !(options.csvoutput or options.pdfoutput) then
